@@ -24,47 +24,58 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 /**
- * <Prove description of functionality provided by this Type> 
+ * <Prove description of functionality provided by this Type>
+ * 
  * @author amresh.singh
  */
 public class IMDBNeo4JExample
 {
-    enum RelationshipTypes implements RelationshipType { ACTS_IN };
-    
+    enum RelationshipTypes implements RelationshipType
+    {
+        ACTS_IN
+    };
+
     public static void main(String[] args)
     {
         Transaction tx = null;
-        
+
         try
         {
             GraphDatabaseService gds = new EmbeddedGraphDatabase("target/neo4j-imdb-db");
-            
+
             tx = gds.beginTx();
             
-            Node ddlj = gds.createNode();
-            ddlj.setProperty("title","DDLJ");
-            ddlj.setProperty("year",1994);
-            gds.index().forNodes("movies").add(ddlj,"id", 1);
+            //Mission Impossible
+            Node mi = gds.createNode();
+            mi.setProperty("title", "Mission Impossible");
+            mi.setProperty("year", 1996);
+            gds.index().forNodes("movies").add(mi, "id", 1);
+
             
-            Node srk = gds.createNode();
-            srk.setProperty("name","Shahrukh Khan");
+            Node tom = gds.createNode();
+            tom.setProperty("name", "Tom Cruise");
+            Relationship actorRel = tom.createRelationshipTo(mi, RelationshipTypes.ACTS_IN);
+            actorRel.setProperty("roleName", "Lead Actor");
             
-            Relationship role = srk.createRelationshipTo(ddlj, RelationshipTypes.ACTS_IN);
-            role.setProperty("roleName","Lead Actor");
+            Node ema = gds.createNode();
+            ema.setProperty("name", "Emmanuelle Béart");
+            Relationship actressRel = ema.createRelationshipTo(mi, RelationshipTypes.ACTS_IN);
+            actressRel.setProperty("roleName", "Lead Actress");
             
             
             
+            //Print Movie and Actors
             Node movie = gds.index().forNodes("movies").get("id", 1).getSingle();
             
-            System.out.println("Actors in Movie - " + movie.getProperty("title") + ":");  //Should be DDLJ
-            
-            
+            System.out.println("Actors in Movie - " + movie.getProperty("title") + ":"); 
+            System.out.println("--------------------------------------");
+
             for (Relationship rel : movie.getRelationships(RelationshipTypes.ACTS_IN, Direction.INCOMING))
             {
-                Node actor = rel.getOtherNode(movie);                
+                Node actor = rel.getOtherNode(movie);
                 System.out.println(actor.getProperty("name") + " as " + rel.getProperty("roleName"));
             }
-            
+
             tx.success();
         }
         catch (Exception e)
